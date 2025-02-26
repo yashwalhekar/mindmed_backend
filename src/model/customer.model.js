@@ -1,38 +1,13 @@
-const db = require("../config/db");
+const mongoose = require("mongoose");
 
-const createTable = async () => {
-  try {
-    const sql = `CREATE TABLE IF NOT EXISTS customers (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(255),
-      email VARCHAR(100),
-      phone VARCHAR(20),
-      message MEDIUMTEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`;
-    await db.query(sql);
-    console.log("✅ Coustomer table checked/created successfully");
-  } catch (err) {
-    console.error("❌ Error creating table:", err);
-  }
-};
+const CustomerSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true},
+  phone: { type: String, required: true },
+  message: { type: String },
+  createdAt: { type: Date, default: Date.now },
+});
 
-createTable().catch((err) => console.error("Error creating table:", err));
+const Customer = mongoose.model("Customer", CustomerSchema);
 
-exports.createCustomer = async (name,email,phone,message) => {
-  try {
-    const sql = `INSERT INTO customers (name,email,phone,message) 
-    VALUES (?, ?, ?, ?)`;
-    const [result] = await db.execute(sql, [
-      name,
-      email,
-      phone,
-      message
-    ]);
-    return result;
-  } catch (error) {
-    console.error("Error creating user:", error.message);
-    throw error;
-  }
-};
-
+module.exports = Customer;
