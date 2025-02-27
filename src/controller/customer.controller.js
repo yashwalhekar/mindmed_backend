@@ -1,7 +1,6 @@
 const Customer = require("../model/customer.model");
 const nodemailer = require("nodemailer");
 
-
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: process.env.EMAIL_PORT,
@@ -13,11 +12,24 @@ const transporter = nodemailer.createTransport({
 });
 
 // Email to Customer
-const sendMailToCustomer = (name, email, message) => ({
+const sendMailToCustomer = (name, email, id, currentDate) => ({
   from: process.env.EMAIL_USER,
   to: email,
   subject: "Form Submission Received",
-  text: `Hello ${name},\n\nWe received your message: "${message}".\n\nThank you!`,
+  text: `Dear ${name},
+
+Thank you for reaching out to Mindmed Innovations. We have received your inquiry regarding Service ID: ${id} on ${currentDate}. Our team is currently reviewing your request, and we will provide a response within 3 business days.
+
+If you require any further information in the meantime, please feel free to contact us at
+contact@mindmedinnovations.com
+Phone Number: 9075559311
+
+We appreciate your patience and look forward to assisting you.
+
+Best regards,  
+Minal Bhuyekar  
+MindMed Innovations  
+minal@mindmedinnovations.com`,
 });
 
 // Email to Admin
@@ -47,11 +59,9 @@ const customerDetails = async (req, res) => {
     });
 
     if (messageCount >= 5) {
-      return res
-        .status(429)
-        .json({
-          error: "Limit exceeded: You can only send 5 messages per day!",
-        });
+      return res.status(429).json({
+        error: "Limit exceeded: You can only send 5 messages per day!",
+      });
     }
 
     // Store in MongoDB
@@ -59,10 +69,13 @@ const customerDetails = async (req, res) => {
     await customer.save();
     console.log("✅ Customer saved to database:", customer);
 
+    const id = customer._id; // Get the ID from MongoDB
+    const currentDate = new Date(customer.createdAt).toLocaleString(); // Format the created date
+
     try {
       // Send emails concurrently
       await Promise.all([
-        transporter.sendMail(sendMailToCustomer(name, email, message)),
+        transporter.sendMail(sendMailToCustomer(name, email, id, currentDate)),
         transporter.sendMail(sendMailToHost(name, email, phone, message)),
       ]);
 
@@ -74,12 +87,10 @@ const customerDetails = async (req, res) => {
         .json({ error: "Failed to send email, but data saved!" });
     }
 
-    res
-      .status(200)
-      .json({
-        message: "Information stored successfully & emails sent!",
-        customer,
-      });
+    res.status(200).json({
+      message: "Information stored successfully & emails sent!",
+      customer: { id, createdAt: customer.createdAt }, // Return ID and createdAt
+    });
   } catch (error) {
     console.error("❌ Database error:", error.message);
     res.status(500).json({ error: "Failed to store information!" });
