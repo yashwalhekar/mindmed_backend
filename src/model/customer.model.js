@@ -1,13 +1,13 @@
 const mongoose = require("mongoose");
 
-const CustomerSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true},
-  phone: { type: String, required: true },
-  message: { type: String },
-  createdAt: { type: Date, default: Date.now },
-});
+const customerSchema = new mongoose.Schema(
+  {
+    name: String,
+    email: String,
+    phone: String,
+    message: String,
+  },
+  { timestamps: true } // Auto-adds createdAt & updatedAt
+);
 
-const Customer = mongoose.model("Customer", CustomerSchema);
-
-module.exports = Customer;
+module.exports = mongoose.model("Customer", customerSchema);
